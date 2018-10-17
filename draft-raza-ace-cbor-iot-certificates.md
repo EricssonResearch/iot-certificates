@@ -55,7 +55,7 @@ informative:
 
 --- abstract
 
-This document specifies a CBOR encoding and profiling of X.509 public key certificate suitable for Internet of Things (IoT) deployments. 
+This document specifies a CBOR encoding and profiling of X.509 public key certificate suitable for Internet of Things (IoT) deployments. The full X.509 public key certificate format and commonly used ASN.1 encoding is overly verbose for constrained IoT environments. Profiling together with CBOR encoding can reduces certificate sizes by XX%.
 
 --- middle
 
@@ -130,24 +130,28 @@ Since this is fixed by the profile restrictions, it can be omitted, saving 12 by
 * Signature  
 By omitting unneeded ASN.1 information, the overhead for sending the two 32-bit values is reduced from 11 to two bytes.
 
-# Certificate decoding architecture
-For the currently used DTLS v1.2 protocol, where the handshake is sent unencrypted, the actual encoding and compression can be done at a 6lowpan border gateway which allows the server side to stay unmodified. For DTLS v1.3 the encoding needs to be done fully end-to-end, through adding the functionality to the server.
+# Expected certificate sizes
 
 
 See {{fig-table}}. 
 
 ~~~~~~~~~~~
+[//]: # (WIP Savings for profile: mainly extra issuer and subject info: -11 -18 -11 -18)
+[//]: # (WIP Savings for compression: id 5, alg 12, subj 27, val. 21, issuer 12, publ key 56, s-alg 12, sig 9)
 
-+------------------------------------------------+
-|                      |                         |
-+------------------------------------------------+
-|                      |                         |
-+------------------------------------------------+
-|                      |                         |
-+------------------------------------------------+
++---------------------------------------------------------------+
+|                 |   X.509    | X.509 profiled | X.509 encoded |
++---------------------------------------------------------------+
+| IoT certificate |    450     |      392       |      238      |
++---------------------------------------------------------------+
+|                 |            |                |               |
++---------------------------------------------------------------+
 ~~~~~~~~~~~
 {: #fig-table title="Table"}
 {: artwork-align="center"}
+
+# Certificate decoding architecture
+For the currently used DTLS v1.2 protocol, where the handshake is sent unencrypted, the actual encoding and compression can be done at a 6lowpan border gateway which allows the server side to stay unmodified. For DTLS v1.3 the encoding needs to be done fully end-to-end, through adding the endcoding/decoding functionality to the server.
 
 
 # Security Considerations  {#sec-cons}
@@ -170,9 +174,9 @@ The following people have contributed to this document:
 
 --- back
 
-# Appendix {#app}
+# Appendix {#app} Certificate Field Size Calculations
 
-TBD
+Breakdown of field savings
 
 --- fluff
 
