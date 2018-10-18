@@ -3,6 +3,8 @@ title: CBOR IoT Profile of X.509 Certificates
 # abbrev: CBOR-IoT-Certificates
 docname: draft-raza-ace-cbor-iot-certificates-latest
 
+[//]: # (Possible online render: https://xml2rfc.tools.ietf.org/experimental.html)
+
 ipr: trust200902
 wg: ACE Working Group
 cat: std
@@ -55,39 +57,42 @@ informative:
 
 --- abstract
 
-This document specifies a CBOR encoding and profiling of X.509 public key certificate suitable for Internet of Things (IoT) deployments. The full X.509 public key certificate format and commonly used ASN.1 encoding is overly verbose for constrained IoT environments. Profiling together with CBOR encoding can reduces certificate sizes by XX%.
+This document specifies a CBOR encoding and profiling of X.509 public key certificate suitable for Internet of Things (IoT) deployments. The full X.509 public key certificate format and commonly used ASN.1 encoding is overly verbose for constrained IoT environments. Profiling together with CBOR encoding can reduce certificate size and thereby communication overhead.
 
 --- middle
 
 # Introduction  {#intro}
 
-One of the challenges with deploying a Public Key Infrastructure (PKI) for the Internet of Things (IoT) is the size and encoding of public key certificates, since those are not optimized for constrained environments {{RFC7228}}. More compact certificate representations are desireable. Due to the current PKI usage of X.509 certificates, keeping X.509 compatibility is ___
+One of the challenges with deploying a Public Key Infrastructure (PKI) for the Internet of Things (IoT) is the size and encoding of X.509 public key certificates, since those are not optimized for constrained environments {{RFC7228}}. More compact certificate representations are desirable. Due to the current PKI usage of X.509 certificates, keeping X.509 compatibility is necessary at least for a transition period. However, the use of a more compact encoding with the Concise Binary Object Representation (CBOR) {{I-D.ietf-cbor-7049bis}} reduces certificate size and thereby communication overhead.
 
-CBOR {{RFC7049}}
+CBOR is a data format designed for small code size and small message size. CBOR builds on the JSON data model but extends it by e.g. encoding binary data directly without base64 conversion. In addition to the binary CBOR encoding, CBOR also has a diagnostic notation that is readable and editable by humans. The Concise Data Definition Language (CDDL) {{I-D.ietf-cbor-cddl}} provides a way to express structures for protocol messages and APIs that use CBOR. {{I-D.ietf-cbor-cddl}} also extends the diagnostic notation.
 
-DTLS {{RFC6347}}
+CBOR data items are encoded to or decoded from byte strings using a type-length-value encoding scheme, where the three highest order bits of the initial byte contain information about the major type. CBOR supports several different types of data items, in addition to integers (int, uint), simple values (e.g. null), byte strings (bstr), and text strings (tstr), CBOR also supports arrays [] of data items and maps {} of pairs of data items. Some examples are given below. For a complete specification and more examples, see {{I-D.ietf-cbor-7049bis}} and {{I-D.ietf-cbor-cddl}}.
 
-EDHOC {{I-D.selander-ace-cose-ecdhe}}
-
+This document is based on  <ref till workshop paper>. It specifies the CBOR IoT Certificate profile that can be used e.g. with DTLS {{RFC6347}} or EDHOC {{I-D.selander-ace-cose-ecdhe}}. The same profile can be adapted for native CBOR encoded certificates. Further details are provided in {{}}.
 
 * Terminology   {#terminology}
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14 {{RFC2119}} {{RFC8174}} when, and only when, they appear in all capitals, as shown here.
 
-This specification makes use of the following terminology:  
+This specification makes use of the terminology in {{RFC7228}}.
 
-IoT device: A resource constrained device with Internet connectivity.
+# X.509 Certificate Profile
 
-# IoT certificate profile
+This profile is inspired by {{RFC7925}} and mandates further restrictions to enable reduction of certificate size.
+
+In this section we list the required fields in an X.509 certificate needed by devices in IoT deployments
+
+In order to comply with this profile, the following restrictions MUST be applied.
 
 * Version number  
-The X.509 standard has not moved beyond version 3 since 2008. With the introduction of certificate extensions new certificate fields can be added without breaking the format, making version changes less likely. Therefore this IoT profile fixes the version number to 3.
+The X.509 standard has not moved beyond version 3 since 2008. With the introduction of certificate extensions new certificate fields can be added without breaking the format, making version changes less likely. Therefore this profile fixes the version number to 3.
 * Serial number  
-The serial number together with the identity of the CA is the unique identifier of a certificate. The X.509 standard does not specify the signedness of the serial number, but the IoT profile requires an unsigned integer.
+The serial number together with the identity of the CA is the unique identifier of a certificate. The X.509 standard does not specify the signedness of the serial number, but this profile requires an unsigned integer. < optimal? >
 * Issuer  
-Used to identify the issuing CA through a sequence of name-value pairs. The IoT profile is restricting this to one pair, common name and associated string value. The requirement is that the common name must uniquely identify the CA.
+Used to identify the issuing CA through a sequence of name-value pairs. This profile is restricting this to one pair, common name and associated string value.  The common name MUST uniquely identify the CA. Other fields MUST NOT be used.
 * Validity  
-Requiring the use of UTCTime-format, YYMMDDhhmmss, gives the most compact representation.
+The following representation MUST be used: UTCTime-format, YYMMDDhhmmss.
 * Subject  
 The subject section has the same format as the issuer, identifying the receiver of the public key through a sequence of name-value pairs. This sequence is in the profile restricted to a single pair, subject name and associated (unique) value. For an IoT-device, the MAC-derived EUI-64 serves this purpose well.
 * Subject public key info  
@@ -103,18 +108,23 @@ Fixed to ECDSA with SHA256.
 * Signature  
 The field corresponding to the signature done by by the CA private key. For the IoT-profile, this is restricted to ECDSA signatures.
 
-# Profile encoding and compression
-By combining the use of the CBOR encoding instead of ASN.1 and base64 encoding together with the knowledge of the IoT profile restrictions, the resulting IoT certificates size can be reduced with more than 50%.
+# CBOR Profile Encoding 
+
+This section specifies a CBOR encoding and lossless compression of the X.509 certificate profile of the previous section. The encoding and compression has several components including: ASN.1 and base64 encoding is replaced with CBOR encoding, static fields are elided, and compression of elliptic curve points. Combining these different components reduces the certificate size significantly, see <table>.
 
 
 * Version number  
-Assuming a fixed version 3 flag, the field is omitted in the encoding.
+Assuming a fixed version 3 flag, this field is omitted in the encoding.
+
 * Serial number  
 With no known structure, the only savings come from cbor encoding.
+
 * Issuer  
 With the restriction of only allowing common name, the common name can be omitted. The overhead goes from 13 bytes to one byte.
+
 * Validity  
 The time is encoded as UnixTime. This reduces the size from 32 to 11 bytes for a 'not before'-'not after' validity pair.
+
 * Subject  
 A subject identified by a EUI-64, based on a 48bit unique MAC id, can be encoded with only 7 bytes using CBOR. This is a reduction down from 36 bytes for a corresponding ASN.1 encoding.
 
@@ -139,32 +149,44 @@ See {{fig-table}}.
 [//]: # (WIP Savings for profile: mainly extra issuer and subject info: -11 -18 -11 -18)
 [//]: # (WIP Savings for compression: id 5, alg 12, subj 27, val. 21, issuer 12, publ key 56, s-alg 12, sig 9)
 
-+---------------------------------------------------------------+
-|                 |   X.509    | X.509 profiled | X.509 encoded |
-+---------------------------------------------------------------+
-| IoT certificate |    450     |      392       |      238      |
-+---------------------------------------------------------------+
-|                 |            |                |               |
-+---------------------------------------------------------------+
+
++-------------------------------------------------------------+
+|                |   X.509    | X.509 profiled | CBOR encoded |
++-------------------------------------------------------------+
+| CBOR IoT cert. |    450     |      392       |     238      |
++-------------------------------------------------------------+
 ~~~~~~~~~~~
 {: #fig-table title="Table"}
 {: artwork-align="center"}
 
-# Certificate decoding architecture
+# Deployment settings
+
+The CBOR IoT Certificates can be deployed with legacy X.509 certificates and CA infrastructure. 
+
 For the currently used DTLS v1.2 protocol, where the handshake is sent unencrypted, the actual encoding and compression can be done at a 6lowpan border gateway which allows the server side to stay unmodified. For DTLS v1.3 the encoding needs to be done fully end-to-end, through adding the endcoding/decoding functionality to the server.
 
+For the setting with only server authentication, the server only needs to be provisioned with the CBOR IoT certificate.
+
+When the devices are only required to authenticate with a known set of servers, further performance improvements can be achieved with the use of native CBOR IoT certificates. In this case the signature is calculated over the CBOR encoded structure rather than the ASN.1 encoded structure. This removes entirely the need for ASN.1 and reduces the processing in the authenticating devices.
 
 # Security Considerations  {#sec-cons}
 
-TBD
+The profiling of X.509 decreases the number of fields transmitted which reduces the risk for implementation errors.
+
 
 # Privacy Considerations 
 
-TBD
+The mechanism in this draft does not reveal any additional information compared to X.509.
+
+Because of difference in size, it will be possible to detect the this profile is used.
+
+The gateway solution requires unencrypted certificates.
+
+
 
 # IANA Considerations  {#iana}
 
-TBD
+None.
 
 # Acknowledgments 
 {: numbered="no"}
@@ -174,9 +196,103 @@ The following people have contributed to this document:
 
 --- back
 
-# Appendix {#app} Certificate Field Size Calculations
+# Appendix {#app} CBOR CDDL
 
-Breakdown of field savings
+~~~~~~~~~~~ CDDL
+certificate = [
+  serial_number	: uint,
+  issuer	: text,
+  validity	: [notBefore: int, notAfter: int],
+  subject	: text / bytes
+  public_key	: bytes
+  ? extensions	: [+ extension],
+  signature	: bytes
+] 
+~~~~~~~~~~~
 
---- fluff
+~~~~~~~~~~~ CDDL
+extension = [
+  oid		: int,
+  ? critical	: bool,
+  value		: bytes
+] 
+~~~~~~~~~~~
+
+# Appendix {#app} CBOR IoT profile, ASN.1
+
+~~~~~~~~~~~ ASN.1
+IOTCertificate DEFINITIONS EXPLICIT TAGS ::= BEGIN
+
+Certificate	    ::=	SEQUENCE {
+  tbsCertificate	  TBSCertificate,
+  signatureAlgorithm	  SignatureIdentifier,
+  signature		  BIT STRING
+}
+
+TBSCertificate	    ::= SEQUENCE {
+  version	     [0]  INTEGER {v3(2)},
+  serialNumber		  INTEGER (1..MAX),
+  signature		  SignatureIdentifier,
+  issuer		  Name,
+  validity		  Validity,
+  subject		  Name,
+  subjectPublicKeyInfo	  SubjectPublicKeyInfo,
+  extensions	     [3]  Extensions OPTIONAL
+}
+
+SignatureIdentifier ::= SEQUENCE {
+  algorithm		  OBJECT IDENTIFIER (ecdsa-with-SHA256)
+}
+
+Name		    ::= SEQUENCE SIZE (1) OF DistinguishedName
+DistinguishedName   ::= SET SIZE (1) OF CommonName
+CommonName	    ::= SEQUENCE {
+  type			  OBJECT IDENTIFIER (id-at-commonName),
+  value			  UTF8String
+		-- For a CA, value is CA name, else EUI-64 in format
+		-- "01-23-54-FF-FE-AB-CD-EF"
+}
+
+Validity	    ::= SEQUENCE {
+  notBefore		  UTCTime,
+  notAfter		  UTCTime
+}
+
+SubjectPublicKeyInfo::= SEQUENCE {
+  algorithm		  AlgorithmIdentifier,
+  subjectPublicKey	  BIT STRING
+}
+
+AlgorithmIdentifier ::= SEQUENCE {
+  algorithm		  OBJECT IDENTIFIER (id-ecPublicKey),
+  parameters		  OBJECT IDENTIFIER (prime256v1)
+}
+
+Extensions	    ::= SEQUENCE SIZE (1..MAX) OF Extension
+
+Extension	    ::= SEQUENCE {
+  extnId		  OBJECT IDENTIFIER,
+  critical		  BOOLEAN DEFAULT FALSE,
+  extnValue		  OCTET STRING
+}
+
+ansi-X9-62	    OBJECT IDENTIFIER	::=
+			  {iso(1) member-body(2) us(840) 10045}
+
+id-ecPublicKey 	    OBJECT IDENTIFIER	::=
+			  {ansi-X9-62 keyType(2) 1}
+
+prime256v1	    OBJECT IDENTIFIER	::=
+			  {ansi-X9-62 curves(3) prime(1) 7}
+
+ecdsa-with-SHA256   OBJECT IDENTIFIER	::=	
+			  {ansi-X9-62 signatures(4) ecdsa-with-SHA2(3) 2}
+
+id-at-commonName    OBJECT IDENTIFIER	::=
+			  {joint-iso-itu-t(2) ds(5) attributeType(4) 3}
+
+END
+
+~~~~~~~~~~~
+
 
