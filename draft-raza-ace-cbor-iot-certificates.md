@@ -43,33 +43,52 @@ author:
 normative:
 
   RFC2119:
-  RFC7049:
+  I-D.ietf-cbor-7049bis:
+  I-D.ietf-cbor-cddl:
   RFC7228:
   RFC8174:
 
 
 informative:
-
+  RFC7925:
   RFC6347:
   I-D.selander-ace-cose-ecdhe:
 
 
+  X.509-IoT:
+    target: https://doi.org/10.1007/978-3-319-93797-7_14
+    title: Lightweight X.509 Digital Certificates for the Internet of Things.
+    seriesinfo:
+      "Springer, Cham.": "Lecture Notes of the Institute for Computer Sciences, Social Informatics and Telecommunications Engineering, vol 242."
+    author:
+      -
+        ins: F. Forsby
+      -
+        ins: M. Furuhed
+      -
+        ins: P. Papadimitratos
+      -
+        ins: S. Raza
+    date: July 2018
 
 --- abstract
 
-This document specifies a CBOR encoding and profiling of X.509 public key certificate suitable for Internet of Things (IoT) deployments. The full X.509 public key certificate format and commonly used ASN.1 encoding is overly verbose for constrained IoT environments. Profiling together with CBOR encoding can reduce certificate size and thereby communication overhead.
+This document specifies a CBOR encoding and profiling of X.509 public key certificate suitable for Internet of Things (IoT) deployments. The full X.509 public key certificate format and commonly used ASN.1 encoding is overly verbose for constrained IoT environments. Profiling together with CBOR encoding can reduce the certificate size significantly with associated known performance benefits.
 
 --- middle
 
 # Introduction  {#intro}
 
-One of the challenges with deploying a Public Key Infrastructure (PKI) for the Internet of Things (IoT) is the size and encoding of X.509 public key certificates, since those are not optimized for constrained environments {{RFC7228}}. More compact certificate representations are desirable. Due to the current PKI usage of X.509 certificates, keeping X.509 compatibility is necessary at least for a transition period. However, the use of a more compact encoding with the Concise Binary Object Representation (CBOR) {{I-D.ietf-cbor-7049bis}} reduces certificate size and thereby communication overhead.
+One of the challenges with deploying a Public Key Infrastructure (PKI) for the Internet of Things (IoT) is the size and encoding of X.509 public key certificates, since those are not optimized for constrained environments {{RFC7228}}. More compact certificate representations are desirable. Due to the current PKI usage of X.509 certificates, keeping X.509 compatibility is necessary at least for a transition period. However, the use of a more compact encoding with the Concise Binary Object Representation (CBOR) {{I-D.ietf-cbor-7049bis}} reduces the certificate size significantly which has known performance benefits in terms of decreased communication overhead, power consumption, latency, storage, etc.
 
 CBOR is a data format designed for small code size and small message size. CBOR builds on the JSON data model but extends it by e.g. encoding binary data directly without base64 conversion. In addition to the binary CBOR encoding, CBOR also has a diagnostic notation that is readable and editable by humans. The Concise Data Definition Language (CDDL) {{I-D.ietf-cbor-cddl}} provides a way to express structures for protocol messages and APIs that use CBOR. {{I-D.ietf-cbor-cddl}} also extends the diagnostic notation.
 
 CBOR data items are encoded to or decoded from byte strings using a type-length-value encoding scheme, where the three highest order bits of the initial byte contain information about the major type. CBOR supports several different types of data items, in addition to integers (int, uint), simple values (e.g. null), byte strings (bstr), and text strings (tstr), CBOR also supports arrays [] of data items and maps {} of pairs of data items. Some examples are given below. For a complete specification and more examples, see {{I-D.ietf-cbor-7049bis}} and {{I-D.ietf-cbor-cddl}}.
 
-This document is based on  <ref till workshop paper>. It specifies the CBOR IoT Certificate profile that can be used e.g. with DTLS {{RFC6347}} or EDHOC {{I-D.selander-ace-cose-ecdhe}}. The same profile can be adapted for native CBOR encoded certificates. Further details are provided in {{}}.
+This document specifies the CBOR IoT Certificate profile, which is a CBOR based encoding and compression of the X.509 certificate format. The profile is based on previous work on profiling of X.509 certificates for Internet of Things deployments {{X.509-IoT}} which retains backwards compatibility with X.509, and can be applied for more lightweight authentication with e.g. DTLS {{RFC6347}} or EDHOC {{I-D.selander-ace-cose-ecdhe}}. The same profile can be used for "native" CBOR encoded certificates, which further optimizes the  performance in constrained environments but are not backwards compatible with X.509. Further details are provided in {{dep-set}}.
+
+Other work has looked at reducing size of public key certificates. The purpose of this document is to stimulate a discussion on CBOR based certificates. Further optimizations of the profile are known and will be included in future versions. 
+
 
 * Terminology   {#terminology}
 
@@ -159,7 +178,7 @@ See {{fig-table}}.
 {: #fig-table title="Table"}
 {: artwork-align="center"}
 
-# Deployment settings
+# Deployment settings {#dep-set}
 
 The CBOR IoT Certificates can be deployed with legacy X.509 certificates and CA infrastructure. 
 
