@@ -4,6 +4,8 @@ title: CBOR Profile of X.509 Certificates
 docname: draft-raza-ace-cbor-iot-certificates-latest
 
 [//]: # (Possible online render: https://xml2rfc.tools.ietf.org/experimental.html)
+[//]: # (WIP Savings for profile: mainly extra issuer and subject info: -11 -18 -11 -18)
+[//]: # (WIP Savings for compression: id 5, alg 12, subj 27, val. 21, issuer 12, publ key 56, s-alg 12, sig 9)
 
 ipr: trust200902
 wg: ACE Working Group
@@ -71,9 +73,23 @@ informative:
         ins: S. Raza
     date: July 2018
 
+  PointCompression:
+    target: https://doi.org/10.1007/3-540-39799-X_31
+    title: Use of Elliptic Curves in Cryptography.
+    seriesinfo:
+      "Springer, Cham.": "Lecture Notes of the Institute for Computer Sciences, Social Informatics and Telecommunications Engineering, vol 218."
+    author:
+      -
+        ins: Miller V.S.
+    date: 1986
+
 --- abstract
 
-This document specifies a CBOR encoding and profiling of X.509 public key certificate suitable for Internet of Things (IoT) deployments. The full X.509 public key certificate format and commonly used ASN.1 encoding is overly verbose for constrained IoT environments. Profiling together with CBOR encoding can reduce the certificate size significantly with associated known performance benefits.
+This document specifies a CBOR encoding and profiling of X.509 public key certificate suitable for Internet of Things (IoT) deployments. The full X.509 public key certificate format and commonly used ASN.1 encoding is overly verbose for constrained IoT environments. Profiling together with CBOR encoding can reduce the certificate size significantly with associated known performance benefits.  
+
+< suggestion: Shahid suggests adding the folloing:
+This solution is compatible with the existing X.509 standard, meaning that the profiled and compressed
+X.509 certificates for IoT can be used without requiring modifications in the existing X.509 standard. >
 
 --- middle
 
@@ -100,66 +116,61 @@ This specification makes use of the terminology in {{RFC7228}}.
 
 This profile is inspired by {{RFC7925}} and mandates further restrictions to enable reduction of certificate size.
 
-In this section we list the required fields in an X.509 certificate needed by devices in IoT deployments
+In this section we list the required fields in an X.509 certificate needed by devices in IoT deployments. The corresponding ASN.1 schema is given in < ADD appB ref here, currently appendix indexing is broken >.
 
 In order to comply with this profile, the following restrictions MUST be applied.
 
-* Version number  
-The X.509 standard has not moved beyond version 3 since 2008. With the introduction of certificate extensions new certificate fields can be added without breaking the format, making version changes less likely. Therefore this profile fixes the version number to 3.
-* Serial number  
-The serial number together with the identity of the CA is the unique identifier of a certificate. The X.509 standard does not specify the signedness of the serial number, but this profile requires an unsigned integer. < optimal? >
-* Issuer  
-Used to identify the issuing CA through a sequence of name-value pairs. This profile is restricting this to one pair, common name and associated string value.  The common name MUST uniquely identify the CA. Other fields MUST NOT be used.
-* Validity  
-The following representation MUST be used: UTCTime-format, YYMMDDhhmmss.
-* Subject  
-The subject section has the same format as the issuer, identifying the receiver of the public key through a sequence of name-value pairs. This sequence is in the profile restricted to a single pair, subject name and associated (unique) value. For an IoT-device, the MAC-derived EUI-64 serves this purpose well.
-* Subject public key info  
-For the IoT devices, elliptic curve cryptography based algorithms have clear advantages. For the IoT profile the public key algorithm is fixed to _prime256v1_.
-* Extension  
-To maintain forward compatibility, the IoT profile does not restrict the use of extensions. By the X.509-standard, any device must be able to process eight extensions types. Since only four of them are critical for IoT, this profile is making the other four optional. Still mandatory to be understood are:
+* Version number. The X.509 standard has not moved beyond version 3 since 2008. With the introduction of certificate extensions new certificate fields can be added without breaking the format, making version changes less likely. Therefore this profile fixes the version number to 3.
+
+* Serial number. The serial number together with the identity of the CA is the unique identifier of a certificate. The X.509 standard does not specify the signedness of the serial number, but this profile requires an unsigned integer. < optimal? >
+
+* Signature algorithm. For the CBOR profile, the signature algorithm is fixed to ECDSA with SHA256.
+
+* Issuer. Used to identify the issuing CA through a sequence of name-value pairs. This profile is restricting this to one pair, common name and associated string value.  The common name MUST uniquely identify the CA. Other fields MUST NOT be used.
+
+* Validity. The following representation MUST be used: UTCTime-format, YYMMDDhhmmss. This is the most compact format allowed by the X.509 standard.
+
+* Subject. The subject section has the same format as the issuer, identifying the receiver of the public key through a sequence of name-value pairs. This sequence is in the profile restricted to a single pair, subject name and associated (unique) value. For an IoT-device, the MAC-derived EUI-64 serves this purpose well.
+
+* Subject public key info. For the IoT devices, elliptic curve cryptography based algorithms have clear advantages. For the IoT profile the public key algorithm is fixed to prime256v1.
+
+* Issuer Unique ID and Subject Unique ID. These fields are optional in X.509 and MUST NOT be used with the CBOR profile.
+
+* Extensions. Extensions consist of three parts; an OID, a boolean telling if it is critical or not, and the value. To maintain forward compatibility, the CBOR profile does not restrict the use of extensions. By the X.509-standard, any device must be able to process eight extensions types. Since only four of them are critical for IoT, this profile is making the other four optional. Still mandatory to be understood are:
   * Key Usage
   * Subject Alternative Name
   * Basic Constraints
   * Extended Key Usage
-* Signature algorithm  
-Fixed to ECDSA with SHA256.
-* Signature  
-The field corresponding to the signature done by by the CA private key. For the IoT-profile, this is restricted to ECDSA signatures.
 
-# CBOR Profile Encoding 
+* Certificate signature algorithm. This field duplicates the info present in the signature algorithm field. Fixed to ECDSA with SHA256.
+
+* Certificate Signature. The field corresponds to the signature done by the CA private key. For the CBOR profile, this is restricted to ECDSA type signatures with a signature length of 64 bits.
+
+# CBOR Profile Encoding {#encoding}
 
 This section specifies a CBOR encoding and lossless compression of the X.509 certificate profile of the previous section. The CDDL representation is given in {{appA}}. 
 
-The encoding and compression has several components including: ASN.1 and base64 encoding is replaced with CBOR encoding, static fields are elided, and compression of elliptic curve points. Combining these different components reduces the certificate size significantly, see {{fig-table}}.
+The encoding and compression has several components including: ASN.1 and base64 encoding is replaced with CBOR encoding, static fields are elided, and compression of elliptic curve points. The field encodings and associated savings are listed below. Combining these different components reduces the certificate size significantly, see {{fig-table}}.
 
+* Version number. The version number field is omitted in the encoding. This saves 5 bytes.
 
-* Version number  
-Assuming a fixed version 3 flag, this field is omitted in the encoding.
+* Serial number. The serial number is encoded as an unsigned integer. Encoding overhead is reduced by one byte.
 
-* Serial number  
-With no known structure, the only savings come from cbor encoding.
+* Signature algorithm. The signature algorithm is known from the profile and is omitted in the ecoding. This saves 12 bytes.
 
-* Issuer  
-With the restriction of only allowing common name, the common name can be omitted. The overhead goes from 13 bytes to one byte.
+* Issuer. Since the profile only allows the common name type, the common name type specifier is omitted. In total, the issuer field encoding overhead goes from 13 bytes to one byte.
 
-* Validity  
-The time is encoded as UnixTime. This reduces the size from 32 to 11 bytes for a 'not before'-'not after' validity pair.
+* Validity. The time is encoded as UnixTime in integer format. The validity is represented as a 'not before'-'not after' pair of integer. This reduces the size from 32 to 11 bytes.
 
-* Subject  
-A subject identified by a EUI-64, based on a 48bit unique MAC id, can be encoded with only 7 bytes using CBOR. This is a reduction down from 36 bytes for a corresponding ASN.1 encoding.
+* Subject. An IoT subject is identified by a EUI-64, in turn based on a 48bit unique MAC id. This is encoded using only 7 bytes using CBOR. This is a reduction down from 36 bytes for the corresponding ASN.1 encoding.
 
-* Subject public key info  
-The algorithm identifier is known from the profile restrictions and can be omitted. One of the public key ECC curve point elements can be calculated from the other, hence only one the needed. These actions together reduce size from 91 to 35 bytes.
+* Subject public key info. The algorithm identifier is known from the profile restrictions and is omitted. One of the public key ECC curve point elements can be calculated from the other, hence only one of the curve points is needed (point compression, see {{PointCompression}}). These actions together reduce size from 91 to 35 bytes.
 
-* Extension  
-Some minor savings can be achieved by the more compact CBOR encoding.
+* Extensions. Minor savings are achieved by the compact CBOR encoding. In addition, the relevant X.509 extension OIDs always start with 0x551D, hence these two bytes can be omitted.
 
-* Signature algorithm  
-Since this is fixed by the profile restrictions, it can be omitted, saving 12 bytes.
+* Certificate signature algorithm. The signature algorithm is known from the profile and is omitted in the ecoding.
 
-* Signature  
-By omitting unneeded ASN.1 information, the overhead for sending the two 32-bit values is reduced from 11 to two bytes.
+* Signature. Since the signature algorithm and resulting signature length are known, padding and extra length fields which are present in the ASN.1 encoding are omitted. The overhead for encoding the 64-bit signature value is reduced from 11 to 2 bytes.
 
 # Deployment settings {#dep-set}
 
@@ -175,13 +186,9 @@ For DTLS v1.3 the encoding needs to be done fully end-to-end, through adding the
 
 # Expected certificate sizes
 
-
-See {{fig-table}}. 
+The profiling size saving mainly comes from enforcing removal of issuer and subject info fields besides the common name. The encoding savings are presented above in {{encoding}}, resulting in the numbers shown in {{fig-table}}. 
 
 ~~~~~~~~~~~
-[//]: # (WIP Savings for profile: mainly extra issuer and subject info: -11 -18 -11 -18)
-[//]: # (WIP Savings for compression: id 5, alg 12, subj 27, val. 21, issuer 12, publ key 56, s-alg 12, sig 9)
-
 
 +-------------------------------------------------------------+
 |                |   X.509    | X.509 profiled | CBOR encoded |
@@ -237,15 +244,13 @@ certificate = [
   ? extensions	: [+ extension],
   signature	: bytes
 ] 
-~~~~~~~~~~~
 
-~~~~~~~~~~~ CDDL
 extension = [
   oid		: int,
   ? critical	: bool,
   value		: bytes
 ] 
-~~~~~~~~~~~
+~~~~~~~~~~~ 
 # Appendix CBOR Certificate Profile, ASN.1 {#appB}
 
 ~~~~~~~~~~~ ASN.1
