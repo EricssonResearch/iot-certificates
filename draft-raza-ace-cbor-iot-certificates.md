@@ -1,5 +1,5 @@
 ---
-title: CBOR IoT Profile of X.509 Certificates
+title: CBOR Profile of X.509 Certificates
 # abbrev: CBOR-IoT-Certificates
 docname: draft-raza-ace-cbor-iot-certificates-latest
 
@@ -85,7 +85,7 @@ CBOR is a data format designed for small code size and small message size. CBOR 
 
 CBOR data items are encoded to or decoded from byte strings using a type-length-value encoding scheme, where the three highest order bits of the initial byte contain information about the major type. CBOR supports several different types of data items, in addition to integers (int, uint), simple values (e.g. null), byte strings (bstr), and text strings (tstr), CBOR also supports arrays [] of data items and maps {} of pairs of data items. Some examples are given below. For a complete specification and more examples, see {{I-D.ietf-cbor-7049bis}} and {{I-D.ietf-cbor-cddl}}.
 
-This document specifies the CBOR IoT Certificate profile, which is a CBOR based encoding and compression of the X.509 certificate format. The profile is based on previous work on profiling of X.509 certificates for Internet of Things deployments {{X.509-IoT}} which retains backwards compatibility with X.509, and can be applied for more lightweight authentication with e.g. DTLS {{RFC6347}} or EDHOC {{I-D.selander-ace-cose-ecdhe}}. The same profile can be used for "native" CBOR encoded certificates, which further optimizes the  performance in constrained environments but are not backwards compatible with X.509. Further details are provided in {{dep-set}}.
+This document specifies the CBOR Certificate profile, which is a CBOR based encoding and compression of the X.509 certificate format. The profile is based on previous work on profiling of X.509 certificates for Internet of Things deployments {{X.509-IoT}} which retains backwards compatibility with X.509, and can be applied for more lightweight authentication with e.g. DTLS {{RFC6347}} or EDHOC {{I-D.selander-ace-cose-ecdhe}}. The same profile can be used for "native" CBOR encoded certificates, which further optimizes the  performance in constrained environments but are not backwards compatible with X.509. Further details are provided in {{dep-set}}.
 
 Other work has looked at reducing size of public key certificates. The purpose of this document is to stimulate a discussion on CBOR based certificates. Further optimizations of the profile are known and will be included in future versions. 
 
@@ -129,7 +129,9 @@ The field corresponding to the signature done by by the CA private key. For the 
 
 # CBOR Profile Encoding 
 
-This section specifies a CBOR encoding and lossless compression of the X.509 certificate profile of the previous section. The encoding and compression has several components including: ASN.1 and base64 encoding is replaced with CBOR encoding, static fields are elided, and compression of elliptic curve points. Combining these different components reduces the certificate size significantly, see <table>.
+This section specifies a CBOR encoding and lossless compression of the X.509 certificate profile of the previous section. The CDDL representation is given in {{appA}}. 
+
+The encoding and compression has several components including: ASN.1 and base64 encoding is replaced with CBOR encoding, static fields are elided, and compression of elliptic curve points. Combining these different components reduces the certificate size significantly, see {{fig-table}}.
 
 
 * Version number  
@@ -159,6 +161,18 @@ Since this is fixed by the profile restrictions, it can be omitted, saving 12 by
 * Signature  
 By omitting unneeded ASN.1 information, the overhead for sending the two 32-bit values is reduced from 11 to two bytes.
 
+# Deployment settings {#dep-set}
+
+The CBOR certificates can be deployed with legacy X.509 certificates and CA infrastructure. In order to verify the signature, the CBOR certificate is used to recreate the original X.509 data structure that was signed.
+
+For the currently used DTLS v1.2 protocol, where the handshake is sent unencrypted, the actual encoding and compression can be done at different locations depending on deployment constraints. For example, the mapping between CBOR certificate and standard X.509 certificates can take place in a 6LoWPAN border gateway which allows the server side to stay unmodified. This case gives the advantage of the low overhead of a CBOR certificate over a constrained wireless links. The conversion to X.509 within an IoT device will incur a computational overhead, however, this is negligible compared to the communication overhead.
+
+For the setting with constrained server and server-only  authentication, the server only needs to be provisioned with the CBOR certificate and not perform the conversion to X.509.
+This option is viable when the client authentication can be asserted by other means.
+
+For DTLS v1.3 the encoding needs to be done fully end-to-end, through adding the endcoding/decoding functionality to the server.
+
+
 # Expected certificate sizes
 
 
@@ -172,34 +186,30 @@ See {{fig-table}}.
 +-------------------------------------------------------------+
 |                |   X.509    | X.509 profiled | CBOR encoded |
 +-------------------------------------------------------------+
-| CBOR IoT cert. |    450     |      392       |     238      |
+| CBOR cert.     |    450     |      392       |     238      |
 +-------------------------------------------------------------+
 ~~~~~~~~~~~
 {: #fig-table title="Table"}
 {: artwork-align="center"}
 
-# Deployment settings {#dep-set}
+# Native CBOR Certificates
 
-The CBOR IoT Certificates can be deployed with legacy X.509 certificates and CA infrastructure. 
-
-For the currently used DTLS v1.2 protocol, where the handshake is sent unencrypted, the actual encoding and compression can be done at a 6lowpan border gateway which allows the server side to stay unmodified. For DTLS v1.3 the encoding needs to be done fully end-to-end, through adding the endcoding/decoding functionality to the server.
-
-For the setting with only server authentication, the server only needs to be provisioned with the CBOR IoT certificate.
-
-When the devices are only required to authenticate with a known set of servers, further performance improvements can be achieved with the use of native CBOR IoT certificates. In this case the signature is calculated over the CBOR encoded structure rather than the ASN.1 encoded structure. This removes entirely the need for ASN.1 and reduces the processing in the authenticating devices.
+When the devices are only required to authenticate with a set of native CBOR certificate compatible servers, further performance improvements can be achieved with the use of native CBOR certificates. In this case the signature is calculated over the CBOR encoded structure rather than the ASN.1 encoded structure. This removes entirely the need for ASN.1 and reduces the processing in the authenticating devices, which may become a preferred approach for future deployments. 
 
 # Security Considerations  {#sec-cons}
 
-The profiling of X.509 decreases the number of fields transmitted which reduces the risk for implementation errors.
+The CBOR certificate profiling of X.509 does not change the security assumptions provided by the standard X.509 certificates but decreases the number of fields transmitted which reduces the risk for implementation errors.
+
+The encoding can be made in constant time to reduce risk of information leakage through side channels.
 
 
 # Privacy Considerations 
 
 The mechanism in this draft does not reveal any additional information compared to X.509.
 
-Because of difference in size, it will be possible to detect the this profile is used.
+Because of difference in size, it will be possible to detect that this profile is used.
 
-The gateway solution requires unencrypted certificates.
+The gateway solution described in {{dep-set}} requires unencrypted certificates.
 
 
 
@@ -215,7 +225,7 @@ The following people have contributed to this document:
 
 --- back
 
-# Appendix {#app} CBOR CDDL
+# Appendix CBOR CDDL {#appA}
 
 ~~~~~~~~~~~ CDDL
 certificate = [
@@ -236,8 +246,7 @@ extension = [
   value		: bytes
 ] 
 ~~~~~~~~~~~
-
-# Appendix {#app} CBOR IoT profile, ASN.1
+# Appendix CBOR Certificate Profile, ASN.1 {#appB}
 
 ~~~~~~~~~~~ ASN.1
 IOTCertificate DEFINITIONS EXPLICIT TAGS ::= BEGIN
