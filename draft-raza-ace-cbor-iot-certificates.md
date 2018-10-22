@@ -116,7 +116,7 @@ This specification makes use of the terminology in {{RFC7228}}.
 
 This profile is inspired by {{RFC7925}} and mandates further restrictions to enable reduction of certificate size.
 
-In this section we list the required fields in an X.509 certificate needed by devices in IoT deployments. The corresponding ASN.1 schema is given in < ADD appB ref here, currently appendix indexing is broken >.
+In this section we list the required fields in an X.509 certificate needed by devices in IoT deployments. The corresponding ASN.1 schema is given in {{appB}}.
 
 In order to comply with this profile, the following restrictions MUST be applied.
 
@@ -251,6 +251,7 @@ extension = [
   value		: bytes
 ] 
 ~~~~~~~~~~~ 
+
 # Appendix CBOR Certificate Profile, ASN.1 {#appB}
 
 ~~~~~~~~~~~ ASN.1
