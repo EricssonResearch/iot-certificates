@@ -118,7 +118,7 @@ In order to comply with this profile, the following restrictions MUST be applied
 
 * Version number. The X.509 standard has not moved beyond version 3 since 2008. With the introduction of certificate extensions new certificate fields can be added without breaking the format, making version changes less likely. Therefore this profile fixes the version number to 3.
 
-* Serial number. The serial number together with the identity of the CA is the unique identifier of a certificate. The X.509 standard does not specify the signedness of the serial number, but this profile requires an unsigned integer. < optimal? >
+* Serial number. The serial number together with the identity of the CA is the unique identifier of a certificate. The X.509 standard does not specify the signedness of the serial number, but this profile requires an unsigned integer.
 
 * Signature algorithm. For the CBOR profile, the signature algorithm is fixed to ECDSA with SHA256.
 
