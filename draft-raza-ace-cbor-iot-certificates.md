@@ -85,11 +85,7 @@ informative:
 
 --- abstract
 
-This document specifies a CBOR encoding and profiling of X.509 public key certificate suitable for Internet of Things (IoT) deployments. The full X.509 public key certificate format and commonly used ASN.1 encoding is overly verbose for constrained IoT environments. Profiling together with CBOR encoding can reduce the certificate size significantly with associated known performance benefits.  
-
-< suggestion: Shahid suggests adding the folloing:
-This solution is compatible with the existing X.509 standard, meaning that the profiled and compressed
-X.509 certificates for IoT can be used without requiring modifications in the existing X.509 standard. >
+This document specifies a CBOR encoding and profiling of X.509 public key certificate suitable for Internet of Things (IoT) deployments. The full X.509 public key certificate format and commonly used ASN.1 encoding is overly verbose for constrained IoT environments. Profiling together with CBOR encoding can reduce the certificate size significantly with associated known performance benefits. This profiled and compressed X.509 certificate for IoT can be used without requiring modifications in the existing X.509 standard.
 
 --- middle
 
