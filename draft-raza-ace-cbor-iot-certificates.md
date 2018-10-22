@@ -129,7 +129,7 @@ The field corresponding to the signature done by by the CA private key. For the 
 
 # CBOR Profile Encoding 
 
-This section specifies a CBOR encoding and lossless compression of the X.509 certificate profile of the previous section. The CDDL representation is given in {{app}}. 
+This section specifies a CBOR encoding and lossless compression of the X.509 certificate profile of the previous section. The CDDL representation is given in {{appA}}. 
 
 The encoding and compression has several components including: ASN.1 and base64 encoding is replaced with CBOR encoding, static fields are elided, and compression of elliptic curve points. Combining these different components reduces the certificate size significantly, see {{fig-table}}.
 
@@ -225,7 +225,7 @@ The following people have contributed to this document:
 
 --- back
 
-# Appendix {#app} CBOR CDDL
+# Appendix CBOR CDDL {#appA}
 
 ~~~~~~~~~~~ CDDL
 certificate = [
@@ -246,7 +246,7 @@ extension = [
   value		: bytes
 ] 
 ~~~~~~~~~~~
-# Appendix {#app} CBOR Certificate Profile, ASN.1
+# Appendix CBOR Certificate Profile, ASN.1 {#appB}
 
 ~~~~~~~~~~~ ASN.1
 IOTCertificate DEFINITIONS EXPLICIT TAGS ::= BEGIN
