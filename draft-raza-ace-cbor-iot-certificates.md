@@ -22,12 +22,12 @@ author:
       -
         ins: S. Raza
         name: Shahid Raza
-        org: RISE SICS
+        org: RISE AB
         email: shahid.raza@ri.se        
       -
         ins: J. Höglund
         name: Joel Höglund
-        org: RISE SICS
+        org: RISE AB
         email: joel.hoglund@ri.se   
       -
         ins: G. Selander
@@ -190,13 +190,13 @@ The profiling size saving mainly comes from enforcing removal of issuer and subj
 
 ~~~~~~~~~~~
 
-+-------------------------------------------------------------+
-|                |   X.509    | X.509 profiled | CBOR encoded |
-+-------------------------------------------------------------+
-| CBOR cert.     |    450     |      392       |     238      |
-+-------------------------------------------------------------+
++-----------------------------------------------------------------------+
+|                          |   X.509    | X.509 profiled | CBOR encoded |
++-----------------------------------------------------------------------+
+| Certificate Size (bytes) |    450     |      392       |     238      |
++-----------------------------------------------------------------------+
 ~~~~~~~~~~~
-{: #fig-table title="Table"}
+{: #fig-table title="A X.509 certificate size with and without profiling and CBOR encoding"}
 {: artwork-align="center"}
 
 # Native CBOR Certificates
