@@ -1,7 +1,7 @@
 ---
 title: CBOR Profile of X.509 Certificates
 # abbrev: CBOR-Certificates
-docname: draft-raza-ace-cbor-certificates-00
+docname: draft-raza-ace-cbor-certificates-latest
 
 ipr: trust200902
 wg: ACE Working Group
@@ -35,7 +35,11 @@ author:
         name: John Mattsson
         org: Ericsson AB
         email: john.mattsson@ericsson.com
-
+      -
+        ins: M. Furuhed
+        name: Martin Furuhed
+        org: Nexus Group
+        email: martin.furuhed@nexusgroup.com
 
 
 normative:
@@ -114,7 +118,7 @@ In order to comply with this certificate profile, the following restrictions MUS
 
 * Version number. The X.509 standard has not moved beyond version 3 since 2008. With the introduction of certificate extensions new certificate fields can be added without breaking the format, making version changes less likely. Therefore this profile fixes the version number to 3.
 
-* Serial number. The serial number together with the identity of the CA is the unique identifier of a certificate. The X.509 standard does not specify the signedness of the serial number, but this profile requires an unsigned integer.
+* Serial number. The serial number together with the identity of the CA is the unique identifier of a certificate. The serial number MUST be an unsigned integer.
 
 * Signature algorithm. For the CBOR profile, the signature algorithm is fixed to ECDSA with SHA256.
 
@@ -172,20 +176,20 @@ For the currently used DTLS v1.2 protocol, where the handshake is sent unencrypt
 
 For the setting with constrained server and server-only authentication, the server only needs to be provisioned with the CBOR certificate and does not perform the conversion to X.509. This option is viable when client authentication can be asserted by other means.
 
-For DTLS v1.3 the encoding needs to be done fully end-to-end, through adding the endcoding/decoding functionality to the server.
+For DTLS v1.3, because certificates are encrypted, the proposed encoding needs to be done fully end-to-end, through adding the endcoding/decoding functionality to the server. A new certificate format or new certificate compression scheme needs to be added. While that requires changes on the server side, we believe it to be in line with other proposals utilizing cbor encoding for communication with resource constrained devices. 
 
 
 # Expected Certificate Sizes
 
-The profiling size saving mainly comes from enforcing removal of issuer and subject info fields besides the common name. The encoding savings are presented above in {{encoding}}, resulting in the numbers shown in {{fig-table}}. 
+The profiling size saving mainly comes from enforcing removal of issuer and subject info fields besides the common name. The encoding savings are presented above in {{encoding}}, for a sample certificate given in {{appC}} resulting in the numbers shown in {{fig-table}}. 
 
 ~~~~~~~~~~~
 
-+-------------------------------------------------------------+
-|                |   X.509    | X.509 Profiled | CBOR Encoded |
-+-------------------------------------------------------------+
-| Cert. Size     |    450     |      392       |     238      |
-+-------------------------------------------------------------+
++---------------------------------------------------+
+|                   | X.509 Profiled | CBOR Encoded |
++---------------------------------------------------+
+| Certificate Size  |      342       |     164      |
++---------------------------------------------------+
 ~~~~~~~~~~~
 {: #fig-table title="Comparing Sizes of Certificates (bytes)"}
 {: artwork-align="center"}
@@ -201,6 +205,8 @@ This solution applies when the devices are only required to authenticate with a 
 The CBOR profiling of X.509 certificates does not change the security assumptions needed when deploying standard X.509 certificates but decreases the number of fields transmitted, which reduces the risk for implementation errors.
 
 Conversion between the certificate formats can be made in constant time to reduce risk of information leakage through side channels.
+
+The current version of the format hardcodes the signature algorithm which does not allow for crypto agility. A COSE crypto algorithm can be specified with small overhead, and this changed is proposed for a future version of the draft.
 
 
 # Privacy Considerations 
@@ -245,20 +251,20 @@ extension = [
 IOTCertificate DEFINITIONS EXPLICIT TAGS ::= BEGIN
 
 Certificate  ::= SEQUENCE {
-  tbsCertificate	      TBSCertificate,
+  tbsCertificate       TBSCertificate,
   signatureAlgorithm   SignatureIdentifier,
   signature            BIT STRING
 }
 
 TBSCertificate  ::= SEQUENCE {
-  version       [0] INTEGER {v3(2)},
+  version       \[0\] INTEGER {v3(2)},
   serialNumber       INTEGER (1..MAX),
   signature       SignatureIdentifier,
   issuer       Name,
   validity       Validity,
   subject       Name,
   subjectPublicKeyInfo       SubjectPublicKeyInfo,
-  extensions       [3] Extensions OPTIONAL
+  extensions       \[3\] Extensions OPTIONAL
 }
 
 SignatureIdentifier ::= SEQUENCE {
@@ -313,4 +319,36 @@ END
 
 ~~~~~~~~~~~
 
+# Certificate Example {#appC}
+
+This section shows an example of an X.509 profiled certificate before CBOR encoding.
+
+~~~~~~~~~~~
+
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: DEC (HEX)
+    Signature Algorithm: ecdsa-with-SHA256
+        Issuer: <23 byte issuer ID>
+        Validity
+            Not Before: <not_before_ts>
+            Not After : <not_after_ts>
+        Subject: <23 byte UID>
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (256 bit)
+                pub: 
+                    .. .. ..
+                ASN1 OID: prime256v1
+                NIST CURVE: P-256
+        X509v3 extensions:
+            X509v3 Basic Constraints: critical
+                CA:FALSE
+            X509v3 Key Usage: 
+                Digital Signature, Key Encipherment
+    Signature Algorithm: ecdsa-with-SHA256
+         .. .. ...
+                  
+~~~~~~~~~~~
 
