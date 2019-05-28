@@ -1,3 +1,1 @@
-# CBOR Certificates
-
-Minimal repo to host the CBOR Certificates draft that is being written by RISE SICS, Nexus and Ericsson.
+# This repo is not in use
