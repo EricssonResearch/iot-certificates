@@ -1,1 +1,1 @@
-# This repo is not in use
+# This repo is not in use, refer to https://github.com/EricssonResearch/CBOR-certificates
